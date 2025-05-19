@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import me.him188.ani.app.domain.session.AccessTokenPair
-import me.him188.ani.app.domain.session.SessionManager
 import me.him188.ani.app.domain.session.isExpired
 
 /**

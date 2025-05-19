@@ -9,7 +9,7 @@
 
 package me.him188.ani.app.ui.main
 
-import me.him188.ani.app.domain.session.AniAuthStateProvider
+import me.him188.ani.app.domain.session.auth.AniAuthStateProvider
 import me.him188.ani.app.ui.foundation.AbstractViewModel
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject

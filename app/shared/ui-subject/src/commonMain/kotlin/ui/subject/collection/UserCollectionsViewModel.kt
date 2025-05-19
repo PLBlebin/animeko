@@ -30,7 +30,6 @@ import me.him188.ani.app.data.repository.user.SettingsRepository
 import me.him188.ani.app.domain.foundation.LoadError
 import me.him188.ani.app.domain.session.OpaqueSession
 import me.him188.ani.app.domain.session.SessionEvent
-import me.him188.ani.app.domain.session.SessionManager
 import me.him188.ani.app.domain.session.userInfo
 import me.him188.ani.app.navigation.AniNavigator
 import me.him188.ani.app.ui.foundation.AbstractViewModel

@@ -39,7 +39,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import me.him188.ani.app.data.models.UserInfo
-import me.him188.ani.app.domain.session.AuthState
 import me.him188.ani.app.domain.session.SessionManager
 import me.him188.ani.app.navigation.AniNavigator
 import me.him188.ani.app.navigation.LocalNavigator
@@ -52,8 +51,8 @@ import kotlin.coroutines.CoroutineContext
 
 @Composable
 fun SelfAvatar(
-    authState: AuthState,
     selfInfo: UserInfo?,
+    isLoading: Boolean,
     size: DpSize, // = DpSize(48.dp, 48.dp)
     onClickLogin: () -> Unit,
     onClickRetryRefreshSession: () -> Unit,
@@ -63,20 +62,20 @@ fun SelfAvatar(
     var showMenu by rememberSaveable { mutableStateOf(false) }
     Box {
         Surface({ showMenu = true }, modifier, shape = CircleShape) {
-            if (authState.isLoading || authState.isKnownLoggedIn) {
+            if (isLoading) {
                 // 加载中时展示 placeholder
                 AvatarImage(
                     url = selfInfo?.avatarUrl,
                     Modifier.size(size).clip(CircleShape).placeholder(selfInfo == null),
                 )
             } else {
-                if (authState.isKnownGuest) {
+                if (selfInfo == null) {
                     TextButton(onClickLogin) {
                         Text("登录")
                     }
                 } else {
                     SessionTipsIcon(
-                        state = authState,
+                        state = selfInfo,
                         onLogin = onClickLogin,
                         onRetry = onClickRetryRefreshSession,
                         showLabel = false,

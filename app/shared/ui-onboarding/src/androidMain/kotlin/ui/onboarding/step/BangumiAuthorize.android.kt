@@ -11,8 +11,8 @@ package me.him188.ani.app.ui.onboarding.step
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import me.him188.ani.app.domain.session.AuthState
-import me.him188.ani.app.domain.session.TestAuthState
+import me.him188.ani.app.domain.session.auth.AuthState
+import me.him188.ani.app.domain.session.auth.TestAuthState
 import me.him188.ani.app.ui.foundation.ProvideCompositionLocalsForPreview
 import me.him188.ani.utils.platform.annotations.TestOnly
 

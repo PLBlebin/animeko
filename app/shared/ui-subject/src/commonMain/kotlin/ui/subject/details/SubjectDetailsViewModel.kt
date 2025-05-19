@@ -13,7 +13,7 @@ import androidx.compose.runtime.Stable
 import me.him188.ani.app.data.models.subject.SubjectInfo
 import me.him188.ani.app.data.repository.subject.SubjectCollectionRepository
 import me.him188.ani.app.domain.episode.SetEpisodeCollectionTypeUseCase
-import me.him188.ani.app.domain.session.AniAuthStateProvider
+import me.him188.ani.app.domain.session.auth.AniAuthStateProvider
 import me.him188.ani.app.ui.foundation.AbstractViewModel
 import me.him188.ani.app.ui.rating.RateRequest
 import me.him188.ani.app.ui.subject.details.state.SubjectDetailsStateFactory

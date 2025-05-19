@@ -13,8 +13,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
-import me.him188.ani.app.domain.session.AniAuthStateProvider
-import me.him188.ani.app.domain.session.AuthState
+import me.him188.ani.app.domain.session.auth.AniAuthStateProvider
+import me.him188.ani.app.domain.session.auth.AuthState
 import me.him188.ani.app.ui.foundation.AbstractViewModel
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject

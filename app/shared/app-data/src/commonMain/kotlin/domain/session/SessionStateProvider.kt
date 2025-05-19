@@ -2,6 +2,8 @@ package me.him188.ani.app.domain.session
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import me.him188.ani.app.data.repository.RepositoryAuthorizationException
 
 /**
  * 用于获取当前登录状态的接口.
@@ -15,6 +17,15 @@ interface SessionStateProvider {
      * 在 APP 刚启动时, 这个 flow 有可能不会立即 emit, 因为我们可能需要刷新 token. 在刷新完成后, 它一定会 emit.
      */
     val state: Flow<SessionState>
+
+    @Deprecated(
+        "",
+        ReplaceWith(
+            "this.canAccessAniApiNow()",
+            "me.him188.ani.app.domain.session.canAccessAniApiNow",
+        ),
+    )
+    suspend fun isLoggedInNow() = canAccessBangumiApiNow()
 }
 
 /**
@@ -68,3 +79,21 @@ suspend fun SessionStateProvider.canAccessBangumiApiNow(): Boolean {
         is SessionState.Valid -> state.bangumiConnected
     }
 }
+
+suspend fun SessionStateProvider.checkAccessAniApiNow() {
+    if (!canAccessAniApiNow()) {
+        throw RepositoryAuthorizationException()
+    }
+}
+
+suspend fun SessionStateProvider.checkAccessBangumiApiNow() {
+    if (!canAccessBangumiApiNow()) {
+        throw RepositoryAuthorizationException()
+    }
+}
+
+
+fun <T> Flow<T>.restartOnNewLogin(sessionStateProvider: SessionStateProvider): Flow<T> =
+    sessionStateProvider.state.flatMapLatest {
+        this
+    }
