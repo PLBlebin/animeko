@@ -541,8 +541,8 @@ class AuthConfiguratorTest : AbstractBangumiSessionManagerTest() {
                     AniAuthResult(
                         AccessTokenPair(
                             it.accessToken,
-                            it.accessToken,
                             expiresAtMillis = it.expiresIn.seconds.inWholeMilliseconds + currentTimeMillis(),
+                            it.accessToken,
                         ),
                         it.expiresIn,
                         it.refreshToken,
@@ -555,8 +555,9 @@ class AuthConfiguratorTest : AbstractBangumiSessionManagerTest() {
                 return if (result != null) {
                     AniAuthResult(
                         AccessTokenPair(
-                            result.accessToken, result.accessToken,
+                            result.accessToken,
                             expiresAtMillis = result.expiresIn.seconds.inWholeMilliseconds + currentTimeMillis(),
+                            result.accessToken,
                         ),
                         result.expiresIn,
                         result.refreshToken,
@@ -580,5 +581,5 @@ class AuthConfiguratorTest : AbstractBangumiSessionManagerTest() {
     private fun AccessTokenSession(
         accessToken: String, // bangumi
         expiresAtMillis: Long,
-    ) = AccessTokenSession(tokens = AccessTokenPair(accessToken, accessToken, expiresAtMillis))
+    ) = AccessTokenSession(tokens = AccessTokenPair(accessToken, expiresAtMillis, accessToken))
 }

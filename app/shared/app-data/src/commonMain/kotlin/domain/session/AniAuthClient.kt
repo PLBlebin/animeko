@@ -64,9 +64,9 @@ class AniAuthClientImpl(
 
                 AniAuthResult(
                     tokens = AccessTokenPair(
-                        bangumiAccessToken = bangumiToken.accessToken,
                         aniAccessToken = aniToken,
                         expiresAtMillis = bangumiToken.expiresIn.seconds.inWholeMilliseconds + currentTimeMillis(),
+                        bangumiAccessToken = bangumiToken.accessToken,
                     ),
                     expiresInSeconds = bangumiToken.expiresIn,
                     refreshToken = bangumiToken.refreshToken,
@@ -92,9 +92,9 @@ class AniAuthClientImpl(
 
                 AniAuthResult(
                     tokens = AccessTokenPair(
-                        bangumiAccessToken = bangumiToken.accessToken,
                         aniAccessToken = aniToken,
                         expiresAtMillis = bangumiToken.expiresIn.seconds.inWholeMilliseconds + currentTimeMillis(),
+                        bangumiAccessToken = bangumiToken.accessToken,
                     ),
                     expiresInSeconds = bangumiToken.expiresIn,
                     refreshToken = bangumiToken.refreshToken,

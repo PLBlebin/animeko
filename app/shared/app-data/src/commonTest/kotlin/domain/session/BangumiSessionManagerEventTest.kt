@@ -46,7 +46,7 @@ class BangumiSessionManagerEventTest : AbstractBangumiSessionManagerTest() {
             refreshAccessToken = { noCall() },
         )
         runCollectingEvents(manager) {
-            setSession(AccessTokenSession(AccessTokenPair(ACCESS_TOKEN, ACCESS_TOKEN, expiresAtMillis = 1)))
+            setSession(AccessTokenSession(AccessTokenPair(ACCESS_TOKEN, expiresAtMillis = 1, ACCESS_TOKEN)))
         }.run {
             assertEquals(1, size)
             assertEquals(SessionEvent.Login, get(0))
@@ -59,7 +59,7 @@ class BangumiSessionManagerEventTest : AbstractBangumiSessionManagerTest() {
             getSelfInfo = { noCall() },
             refreshAccessToken = { noCall() },
         )
-        manager.setSession(AccessTokenSession(AccessTokenPair(ACCESS_TOKEN, ACCESS_TOKEN, expiresAtMillis = 1)))
+        manager.setSession(AccessTokenSession(AccessTokenPair(ACCESS_TOKEN, expiresAtMillis = 1, ACCESS_TOKEN)))
         runCollectingEvents(manager) {
             clearSession()
         }.run {

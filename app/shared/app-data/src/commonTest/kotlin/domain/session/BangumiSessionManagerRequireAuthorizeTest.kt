@@ -364,8 +364,8 @@ class BangumiSessionManagerRequireAuthorizeTest : AbstractBangumiSessionManagerT
     }
 
     private fun successAccessTokenPair(): AccessTokenPair = AccessTokenPair(
-        ACCESS_TOKEN, ACCESS_TOKEN,
-        expiresAtMillis = validExpiresAtMillis,
+        ACCESS_TOKEN, expiresAtMillis = validExpiresAtMillis,
+        ACCESS_TOKEN,
     )
 
     @Test
@@ -582,8 +582,8 @@ class BangumiSessionManagerRequireAuthorizeTest : AbstractBangumiSessionManagerT
         SessionStatus.Verifying(
             AccessTokenPair(
                 token,
-                token,
                 expiresAtMillis = validExpiresAtMillis,
+                token,
             ),
         )
 
@@ -591,8 +591,8 @@ class BangumiSessionManagerRequireAuthorizeTest : AbstractBangumiSessionManagerT
     private fun createVerified(token: String, userInfo: UserInfo): SessionStatus.Verified =
         SessionStatus.Verified(
             AccessTokenPair(
-                token, token,
-                expiresAtMillis = validExpiresAtMillis,
+                token, expiresAtMillis = validExpiresAtMillis,
+                token,
             ),
             userInfo,
         )

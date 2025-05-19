@@ -84,8 +84,8 @@ sealed class AbstractBangumiSessionManagerTest {
     ): NewSession {
         return NewSession(
             AccessTokenPair(
-                accessToken, accessToken,
-                expiresAtMillis,
+                accessToken, expiresAtMillis,
+                accessToken,
             ),
             expiresAtMillis, refreshToken,
         )
@@ -94,7 +94,7 @@ sealed class AbstractBangumiSessionManagerTest {
     internal suspend fun setExpiredToken() {
         tokenRepository.setSession(
             AccessTokenSession(
-                tokens = AccessTokenPair(ACCESS_TOKEN, ACCESS_TOKEN, 0),
+                tokens = AccessTokenPair(ACCESS_TOKEN, 0, ACCESS_TOKEN),
                 // expired
             ),
         )
@@ -104,7 +104,7 @@ sealed class AbstractBangumiSessionManagerTest {
     internal suspend fun setValidToken(token: String = ACCESS_TOKEN, expiresAtMillis: Long = validExpiresAtMillis) {
         tokenRepository.setSession(
             AccessTokenSession(
-                tokens = AccessTokenPair(token, token, expiresAtMillis),
+                tokens = AccessTokenPair(token, expiresAtMillis, token),
                 // not too large, avoid overflow.
             ),
         )

@@ -674,9 +674,9 @@ fun KoinApplication.startCommonKoinModule(
                     newRepo.setSession(
                         AccessTokenSession(
                             tokens = AccessTokenPair(
-                                bangumiAccessToken = legacyBangumiToken,
                                 aniAccessToken = aniToken,
                                 expiresAtMillis = legacySession.tokens.expiresAtMillis,
+                                bangumiAccessToken = legacyBangumiToken,
                             ),
                         ),
                     )

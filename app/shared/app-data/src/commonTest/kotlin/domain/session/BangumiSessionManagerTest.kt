@@ -283,14 +283,14 @@ class BangumiSessionManagerTest : AbstractBangumiSessionManagerTest() {
 
 
     private fun newSession(): NewSession = NewSession(
-        AccessTokenPair(ACCESS_TOKEN, ACCESS_TOKEN, expiresAtMillis = validExpiresAtMillis),
+        AccessTokenPair(ACCESS_TOKEN, expiresAtMillis = validExpiresAtMillis, ACCESS_TOKEN),
         validExpiresAtMillis, REFRESH_TOKEN,
     )
 
     private fun createVerifying(token: String): SessionStatus.Verifying =
-        SessionStatus.Verifying(AccessTokenPair(token, token, expiresAtMillis = validExpiresAtMillis))
+        SessionStatus.Verifying(AccessTokenPair(token, expiresAtMillis = validExpiresAtMillis, token))
 
     private fun createVerified(token: String, userInfo: UserInfo): SessionStatus.Verified =
-        SessionStatus.Verified(AccessTokenPair(token, token, expiresAtMillis = validExpiresAtMillis), userInfo)
+        SessionStatus.Verified(AccessTokenPair(token, expiresAtMillis = validExpiresAtMillis, token), userInfo)
 
 }

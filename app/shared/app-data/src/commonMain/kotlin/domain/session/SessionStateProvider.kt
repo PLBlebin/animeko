@@ -1,0 +1,70 @@
+package me.him188.ani.app.domain.session
+
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+
+/**
+ * 用于获取当前登录状态的接口.
+ */
+interface SessionStateProvider {
+    /**
+     * 当前的登录状态.
+     *
+     * 这个 flow 会在登录状态改变时发出新的值.
+     *
+     * 在 APP 刚启动时, 这个 flow 有可能不会立即 emit, 因为我们可能需要刷新 token. 在刷新完成后, 它一定会 emit.
+     */
+    val state: Flow<SessionState>
+}
+
+/**
+ * Ani 用户登录状态.
+ */
+sealed class SessionState {
+    data class Invalid(
+        val reason: InvalidSessionReason
+    ) : SessionState()
+
+    /**
+     * 登录成功并且 token 还没有过期.
+     */
+    data class Valid(
+        /**
+         * 用户是否登录了 Bangumi. 如果登录了, 则可以使用 Bangumi 评论等功能.
+         */
+        val bangumiConnected: Boolean,
+    ) : SessionState()
+}
+
+/**
+ * 登录状态无效的原因
+ */
+enum class InvalidSessionReason {
+    /**
+     * 没有保存的 token. 说明是新用户或者老用户退出了登录.
+     */
+    NO_TOKEN,
+    NETWORK_ERROR,
+    UNKNOWN,
+}
+
+
+/**
+ * 判断当前的登录状态是否有效.
+ */
+suspend fun SessionStateProvider.canAccessAniApiNow(): Boolean {
+    return when (state.first()) {
+        is SessionState.Invalid -> false
+        is SessionState.Valid -> true
+    }
+}
+
+/**
+ * 判断当前的登录状态是否有效, 并且能访问需要 Bangumi 授权的功能.
+ */
+suspend fun SessionStateProvider.canAccessBangumiApiNow(): Boolean {
+    return when (val state = state.first()) {
+        is SessionState.Invalid -> false
+        is SessionState.Valid -> state.bangumiConnected
+    }
+}

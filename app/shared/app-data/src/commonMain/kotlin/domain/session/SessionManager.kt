@@ -178,8 +178,8 @@ suspend fun SessionManager.isLoggedInNow(
 }
 
 fun AccessTokenPair.isExpired(clock: Clock = Clock.System): Boolean {
-    return expiresAtMillis <= (clock.now()
-        .toEpochMilliseconds() + 13.hours.inWholeMilliseconds) // 提前 13 小时让 token 过期. 因为某些地方 shareIn cache 是 12h
+    return expiresAtMillis <=
+            (clock.now().toEpochMilliseconds() + 1.hours.inWholeMilliseconds) // 提前 1 小时让 token 过期, 避免交给服务器时 403.
 }
 
 /**

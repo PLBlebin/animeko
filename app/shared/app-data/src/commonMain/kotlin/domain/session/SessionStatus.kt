@@ -104,9 +104,9 @@ sealed interface SessionStatus {
  * 捆绑 Bangumi 和 Ani 的 accessTokens, 简化授权逻辑
  */
 data class AccessTokenPair(
-    val bangumiAccessToken: String,
     val aniAccessToken: String,
     val expiresAtMillis: Long,
+    val bangumiAccessToken: String?,
 ) {
     override fun toString(): String {
         // 日志不打印 token

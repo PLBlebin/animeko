@@ -300,9 +300,9 @@ class AniAuthConfigurator(
         sessionManager.setSession(
             AccessTokenSession(
                 tokens = AccessTokenPair(
-                    bangumiAccessToken = bangumiToken,
                     aniAccessToken = aniAccessToken,
                     expiresAtMillis = expiresAtMillis,
+                    bangumiAccessToken = bangumiToken,
                 ),
             ),
         )

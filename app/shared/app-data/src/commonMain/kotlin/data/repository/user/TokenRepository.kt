@@ -37,20 +37,20 @@ class TokenRepository(
     /**
      * 当前的登录会话, 为 `null` 表示未登录.
      */
-    val session: Flow<Session?> = dataStore.data.map { save ->
+    val session: Flow<Session> = dataStore.data.map { save ->
         when {
             save.isGuest == true -> GuestSession
             save.accessTokens != null -> {
                 AccessTokenSession(
                     AccessTokenPair(
-                        bangumiAccessToken = save.accessTokens.bangumiAccessToken,
                         aniAccessToken = save.accessTokens.aniAccessToken,
                         expiresAtMillis = save.accessTokens.expiresAtMillis,
+                        bangumiAccessToken = save.accessTokens.bangumiAccessToken,
                     ),
                 )
             }
 
-            else -> null
+            else -> GuestSession
         }
     }
 
@@ -106,7 +106,7 @@ data class TokenSave internal constructor(
 ) {
     @Serializable
     data class AccessTokens(
-        val bangumiAccessToken: String,
+        val bangumiAccessToken: String?,
         val aniAccessToken: String,
         val expiresAtMillis: Long,
     )
@@ -191,9 +191,9 @@ class LegacyTokenRepository(
             }
             AccessTokenSession(
                 AccessTokenPair(
-                    accessToken,
                     "",
                     expiresAtMillis = expireAt,
+                    accessToken,
                 ),
             )
         }

@@ -24,9 +24,9 @@ object PreviewSessionManager : SessionManager {
     private val savedSession: MutableStateFlow<Session?> = MutableStateFlow(
         AccessTokenSession(
             tokens = AccessTokenPair(
-                bangumiAccessToken = "testToken",
                 aniAccessToken = "testToken",
                 expiresAtMillis = currentTimeMillis() + 1.days.inWholeMilliseconds,
+                bangumiAccessToken = "testToken",
             ),
         ),
     )
@@ -34,9 +34,9 @@ object PreviewSessionManager : SessionManager {
         MutableStateFlow(
             SessionStatus.Verified(
                 AccessTokenPair(
-                    bangumiAccessToken = "testToken",
                     aniAccessToken = "testToken",
                     expiresAtMillis = currentTimeMillis() + 1.days.inWholeMilliseconds,
+                    bangumiAccessToken = "testToken",
                 ),
                 UserInfo.EMPTY,
             ),
