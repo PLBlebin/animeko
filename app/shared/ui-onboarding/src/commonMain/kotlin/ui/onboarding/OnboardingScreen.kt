@@ -16,7 +16,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,7 +28,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import me.him188.ani.app.domain.session.auth.AuthState
 import me.him188.ani.app.platform.LocalContext
 import me.him188.ani.app.ui.foundation.layout.AniWindowInsets
 import me.him188.ani.app.ui.foundation.navigation.BackHandler
@@ -71,10 +69,6 @@ fun OnboardingScreen(
         onFinishOnboarding()
     }
 
-    LaunchedEffect(vm) {
-        vm.collectNewLoginEvent(finishOnboarding)
-    }
-
     val scope = rememberCoroutineScope()
     LifecycleResumeEffect(vm) {
         val job = scope.launch { vm.startAuthorizeCheckAndProxyTesterLoop() }
@@ -114,7 +108,7 @@ fun OnboardingScreen(
 
     var bangumiShowTokenAuthorizePage by remember { mutableStateOf(false) }
 
-    val authorizeState by state.bangumiAuthorizeState.state.collectAsStateWithLifecycle(AuthState.DummyAwaitingResult)
+    val authorizeState by state.bangumiAuthorizeState.state.collectAsStateWithLifecycle()
     val proxyState by state.configureProxyState.state.collectAsStateWithLifecycle(ConfigureProxyUIState.Placeholder)
     val grantNotificationPermissionState by state.bitTorrentFeatureState.grantNotificationPermissionState
         .collectAsStateWithLifecycle(GrantNotificationPermissionState.Placeholder)

@@ -114,17 +114,7 @@ class UserCollectionsViewModel : AbstractViewModel(), KoinComponent {
 //        }
 
         launchInBackground {
-            sessionStateProvider.eventFlow().filter { it is SessionEvent.NewLogin }.collectLatest {
-                // 更换了呃
-            }
-            sessionStateProvider.events.filter {
-                when (it) {
-                    SessionEvent.SwitchToGuest -> false
-                    SessionEvent.TokenRefreshed -> false
-                    SessionEvent.NewLogin -> true
-                    SessionEvent.Logout -> true
-                }
-            }.collectLatest {
+            sessionStateProvider.eventFlow.filter { it is SessionEvent.NewLogin }.collectLatest {
                 logger.info { "登录信息变更, 清空缓存" }
                 // 如果有变更登录, 清空缓存
                 state.refresh()

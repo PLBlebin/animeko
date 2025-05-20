@@ -99,6 +99,7 @@ class SessionManager(
     private val _stateProvider = object : SessionStateProvider {
         override val stateFlow =
             MutableSharedFlow<SessionState>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+        override val eventFlow = MutableSharedFlow<SessionEvent>(extraBufferCapacity = 1)
     }
 
     val stateProvider get() = _stateProvider
