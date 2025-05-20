@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import me.him188.ani.app.platform.LocalContext
@@ -50,6 +51,7 @@ import me.him188.ani.app.ui.onboarding.step.ThemeSelectStep
 import me.him188.ani.app.ui.onboarding.step.ThemeSelectUIState
 import me.him188.ani.app.ui.settings.framework.SettingsState
 import me.him188.ani.app.ui.settings.tabs.network.SystemProxyPresentation
+import me.him188.ani.app.ui.user.TestSelfInfoUiState
 import me.him188.ani.utils.analytics.Analytics
 import me.him188.ani.utils.analytics.AnalyticsEvent
 import me.him188.ani.utils.analytics.AnalyticsEvent.Companion.OnboardingStart
@@ -255,7 +257,7 @@ fun OnboardingScreen(
                         }
                     },
                     text = "完成",
-                    enabled = authorizeState is AuthState.Success,
+                    enabled = authorizeState.isSessionValid == true,
                 )
             },
             navigationIcon = {
@@ -363,7 +365,7 @@ internal fun createTestOnboardingPresentationState(scope: CoroutineScope): Onboa
             onOpenSystemNotificationSettings = { },
         ),
         bangumiAuthorizeState = BangumiAuthorizeStepState(
-            state = flowOf(AuthState.NotAuthed),
+            state = MutableStateFlow(TestSelfInfoUiState),
             onClickNavigateAuthorize = { },
             onCheckCurrentToken = { },
             onCancelAuthorize = { },
