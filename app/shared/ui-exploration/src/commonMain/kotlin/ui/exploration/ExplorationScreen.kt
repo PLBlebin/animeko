@@ -56,7 +56,6 @@ import androidx.paging.compose.collectAsLazyPagingItemsWithLifecycle
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import me.him188.ani.app.data.models.UserInfo
 import me.him188.ani.app.data.models.recommend.RecommendedItemInfo
 import me.him188.ani.app.data.models.recommend.RecommendedSubjectInfo
 import me.him188.ani.app.data.models.recommend.TestRecommendedItemInfos
@@ -65,9 +64,8 @@ import me.him188.ani.app.data.models.subject.TestFollowedSubjectInfos
 import me.him188.ani.app.data.models.subject.subjectInfo
 import me.him188.ani.app.data.models.subject.toNavPlaceholder
 import me.him188.ani.app.data.models.trending.TrendingSubjectInfo
-import me.him188.ani.app.domain.session.auth.AuthState
-import me.him188.ani.app.domain.session.auth.TestAuthState
-import me.him188.ani.app.domain.session.auth.TestUserInfo
+import me.him188.ani.app.data.models.user.SelfInfo
+import me.him188.ani.app.data.models.user.TestSelfInfo
 import me.him188.ani.app.navigation.LocalNavigator
 import me.him188.ani.app.navigation.SubjectDetailPlaceholder
 import me.him188.ani.app.ui.adaptive.AniTopAppBar
@@ -120,7 +118,7 @@ import org.jetbrains.compose.ui.tooling.preview.PreviewScreenSizes
  */
 @Stable
 class ExplorationPageState(
-    selfInfoState: State<UserInfo?>,
+    selfInfoState: State<SelfInfo?>,
     val trendingSubjectInfoPager: LazyPagingItems<TrendingSubjectInfo>,
     val followedSubjectsPager: Flow<PagingData<FollowedSubjectInfo>>,
     val recommendationPager: Flow<PagingData<RecommendedItemInfo>>,
@@ -151,10 +149,10 @@ class ExplorationPageState(
 @Composable
 fun ExplorationScreen(
     state: ExplorationPageState,
-    authState: AuthState,
+    selfInfo: SelfInfo?,
+    isSelfInfoLoading: Boolean,
     onSearch: () -> Unit,
     onClickLogin: () -> Unit,
-    onClickRetryRefreshSession: () -> Unit,
     onClickSettings: () -> Unit,
     modifier: Modifier = Modifier,
     actions: @Composable () -> Unit = {},
@@ -176,7 +174,7 @@ fun ExplorationScreen(
                 Modifier.fillMaxWidth(),
                 actions = {
                     actions()
-                    if (authState.isKnownGuestOrLoggedOut // #1269 游客模式下无法打开设置界面
+                    if ((!isSelfInfoLoading && selfInfo == null) // #1269 游客模式下无法打开设置界面
                         || currentWindowAdaptiveInfo1().windowSizeClass.isWidthAtLeastMedium
                     ) {
                         IconButton(onClick = onClickSettings) {
@@ -186,10 +184,9 @@ fun ExplorationScreen(
                 },
                 avatar = { recommendedSize ->
                     SelfAvatar(
-                        authState,
-                        state.selfInfo,
-                        onClickLogin = onClickLogin,
-                        onClickRetryRefreshSession = onClickRetryRefreshSession,
+                        selfInfo,
+                        isSelfInfoLoading,
+                        onClick = onClickLogin,
                         size = recommendedSize,
                     )
                 },
@@ -385,7 +382,7 @@ private fun PreviewExplorationPage() {
         ExplorationScreen(
             remember {
                 ExplorationPageState(
-                    selfInfoState = stateOf(TestUserInfo),
+                    selfInfoState = stateOf(TestSelfInfo),
                     trendingSubjectInfoPager,
                     followedSubjectsPager = createTestPager(TestFollowedSubjectInfos),
                     recommendationPager = createTestPager(TestRecommendedItemInfos),
@@ -393,8 +390,8 @@ private fun PreviewExplorationPage() {
                     onSetDisableHorizontalScrollTip = {},
                 )
             },
-            authState = TestAuthState,
-            {},
+            selfInfo = TestSelfInfo,
+            isSelfInfoLoading = false,
             {},
             {},
             {},

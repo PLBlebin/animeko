@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import kotlinx.coroutines.launch
-import me.him188.ani.app.domain.session.auth.AuthState
+import me.him188.ani.app.data.models.user.SelfInfo
 import me.him188.ani.app.navigation.LocalNavigator
 import me.him188.ani.app.navigation.MainScreenPage
 import me.him188.ani.app.navigation.getIcon
@@ -76,7 +76,8 @@ import me.him188.ani.utils.platform.isAndroid
 @Composable
 fun MainScreen(
     page: MainScreenPage,
-    authState: AuthState,
+    selfInfo: SelfInfo?,
+    isSelfInfoLoading: Boolean,
     modifier: Modifier = Modifier,
     onNavigateToPage: (MainScreenPage) -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -95,7 +96,8 @@ fun MainScreen(
 
     MainScreenContent(
         page,
-        authState,
+        selfInfo,
+        isSelfInfoLoading,
         onNavigateToPage,
         onNavigateToSettings,
         onNavigateToSearch,
@@ -107,7 +109,8 @@ fun MainScreen(
 @Composable
 private fun MainScreenContent(
     page: MainScreenPage,
-    authState: AuthState,
+    selfInfo: SelfInfo?,
+    isSelfInfoLoading: Boolean,
     onNavigateToPage: (MainScreenPage) -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToSearch: () -> Unit,
@@ -217,13 +220,11 @@ private fun MainScreenContent(
                     MainScreenPage.Exploration -> {
                         ExplorationScreen(
                             explorationPageViewModel.explorationPageState,
-                            authState,
+                            selfInfo,
+                            isSelfInfoLoading = isSelfInfoLoading,
                             onSearch = onNavigateToSearch,
                             onClickSettings = { navigator.navigateSettings() },
                             onClickLogin = { navigator.navigateBangumiAuthorize() },
-                            onClickRetryRefreshSession = {
-                                coroutineScope.launch { explorationPageViewModel.refreshLoginSession() }
-                            },
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
@@ -231,14 +232,10 @@ private fun MainScreenContent(
                     MainScreenPage.Collection -> {
                         CollectionPage(
                             state = userCollectionsViewModel.state,
-                            authState = authState,
+                            selfInfo = selfInfo,
+                            isSelfInfoLoading = isSelfInfoLoading,
                             items = userCollectionsViewModel.items.collectAsLazyPagingItems(),
-                            onClickSearch = onNavigateToSearch,
                             onClickLogin = { navigator.navigateBangumiAuthorize() },
-                            onClickRetryRefreshSession = {
-                                coroutineScope.launch { userCollectionsViewModel.refreshLoginSession() }
-                            },
-                            onClickSettings = { navigator.navigateSettings() },
                             onCollectionUpdate = { subjectId, episode ->
                                 coroutineScope.launch {
                                     userCollectionsViewModel.toggleEpisodeCollection(

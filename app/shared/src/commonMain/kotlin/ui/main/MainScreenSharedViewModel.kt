@@ -9,12 +9,13 @@
 
 package me.him188.ani.app.ui.main
 
-import me.him188.ani.app.domain.session.auth.AniAuthStateProvider
+import me.him188.ani.app.data.repository.user.UserRepository
 import me.him188.ani.app.ui.foundation.AbstractViewModel
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
 class MainScreenSharedViewModel : AbstractViewModel(), KoinComponent {
-    private val authStateProvider: AniAuthStateProvider by inject()
-    val authState = authStateProvider.state
+    private val userRepository: UserRepository by inject()
+
+    val selfInfo = userRepository.selfInfoFlow().shareInBackground()
 }

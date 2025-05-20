@@ -28,9 +28,8 @@ import me.him188.ani.app.data.repository.episode.EpisodeProgressRepository
 import me.him188.ani.app.data.repository.subject.SubjectCollectionRepository
 import me.him188.ani.app.data.repository.user.SettingsRepository
 import me.him188.ani.app.domain.foundation.LoadError
-import me.him188.ani.app.domain.session.OpaqueSession
 import me.him188.ani.app.domain.session.SessionEvent
-import me.him188.ani.app.domain.session.userInfo
+import me.him188.ani.app.domain.session.SessionStateProvider
 import me.him188.ani.app.navigation.AniNavigator
 import me.him188.ani.app.ui.foundation.AbstractViewModel
 import me.him188.ani.app.ui.foundation.launchInBackground
@@ -51,7 +50,7 @@ class UserCollectionsViewModel : AbstractViewModel(), KoinComponent {
     private val episodeProgressRepository: EpisodeProgressRepository by inject()
     private val animeScheduleRepository: AnimeScheduleRepository by inject()
     private val settingsRepository: SettingsRepository by inject()
-    private val sessionManager: SessionManager by inject()
+    private val sessionManager: SessionStateProvider by inject()
 
     val lazyGridState = LazyGridState()
 
@@ -65,10 +64,8 @@ class UserCollectionsViewModel : AbstractViewModel(), KoinComponent {
 
     private val nsfwSettingFlow = settingsRepository.uiSettings.flow.map { it.searchSettings.nsfwMode }
 
-    @OptIn(OpaqueSession::class)
     val state = UserCollectionsState(
         startSearch = { subjectCollectionRepository.subjectCollectionsPager(it) },
-        sessionManager.userInfo.produceState(null),
         collectionCountsState = subjectCollectionRepository.subjectCollectionCountsFlow().produceState(null),
         subjectProgressStateFactory,
         createEditableSubjectCollectionTypeState = {

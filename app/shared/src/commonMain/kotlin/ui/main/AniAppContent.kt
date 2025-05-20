@@ -262,10 +262,10 @@ private fun AniAppContentImpl(
                             this@SharedTransitionLayout, this,
                         ),
                     ) {
-                        val authState by vm.authState.collectAsStateWithLifecycle(AuthState.DummyAwaitingResult)
+                        val selfInfo by vm.selfInfo.collectAsStateWithLifecycle(AuthState.DummyAwaitingResult)
                         MainScreen(
                             page = currentPage,
-                            authState = authState,
+                            selfInfo = selfInfo,
                             onNavigateToPage = { currentPage = it },
                             onNavigateToSettings = { aniNavigator.navigateSettings() },
                             onNavigateToSearch = { aniNavigator.navigateSubjectSearch() },

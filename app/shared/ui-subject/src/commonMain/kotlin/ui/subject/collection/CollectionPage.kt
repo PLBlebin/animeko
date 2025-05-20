@@ -35,7 +35,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.HowToReg
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
@@ -86,13 +85,12 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
-import me.him188.ani.app.data.models.UserInfo
 import me.him188.ani.app.data.models.preference.NsfwMode
 import me.him188.ani.app.data.models.subject.SubjectCollectionCounts
 import me.him188.ani.app.data.models.subject.SubjectCollectionInfo
 import me.him188.ani.app.data.models.subject.toNavPlaceholder
+import me.him188.ani.app.data.models.user.SelfInfo
 import me.him188.ani.app.data.repository.subject.CollectionsFilterQuery
-import me.him188.ani.app.domain.session.auth.AuthState
 import me.him188.ani.app.navigation.LocalNavigator
 import me.him188.ani.app.ui.adaptive.AniTopAppBar
 import me.him188.ani.app.ui.adaptive.AniTopAppBarDefaults
@@ -101,11 +99,8 @@ import me.him188.ani.app.ui.foundation.ifNotNullThen
 import me.him188.ani.app.ui.foundation.layout.AniWindowInsets
 import me.him188.ani.app.ui.foundation.layout.currentWindowAdaptiveInfo1
 import me.him188.ani.app.ui.foundation.layout.isHeightAtLeastMedium
-import me.him188.ani.app.ui.foundation.layout.isWidthAtLeastMedium
 import me.him188.ani.app.ui.foundation.layout.paneHorizontalPadding
 import me.him188.ani.app.ui.foundation.session.SelfAvatar
-import me.him188.ani.app.ui.foundation.session.SessionTipsArea
-import me.him188.ani.app.ui.foundation.session.SessionTipsIcon
 import me.him188.ani.app.ui.foundation.theme.AniThemeDefaults
 import me.him188.ani.app.ui.foundation.widgets.LocalToaster
 import me.him188.ani.app.ui.foundation.widgets.NsfwMask
@@ -137,7 +132,6 @@ val COLLECTION_TABS_SORTED = listOf(
 @Stable
 class UserCollectionsState(
     private val startSearch: (filterQuery: CollectionsFilterQuery) -> Flow<PagingData<SubjectCollectionInfo>>,
-    selfInfoState: State<UserInfo?>,
     collectionCountsState: State<SubjectCollectionCounts?>,
     val subjectProgressStateFactory: SubjectProgressStateFactory,
     val createEditableSubjectCollectionTypeState: (subjectCollection: SubjectCollectionInfo) -> EditableSubjectCollectionTypeState,
@@ -176,8 +170,6 @@ class UserCollectionsState(
                 emitAll(startSearch(it))
             }
 
-    val selfInfo: UserInfo? by selfInfoState
-
     val collectionCounts: SubjectCollectionCounts? by collectionCountsState
 
     val tabRowScrollState = ScrollState(selectedTypeIndex)
@@ -196,12 +188,10 @@ class UserCollectionsState(
 @Composable
 fun CollectionPage(
     state: UserCollectionsState,
-    authState: AuthState,
+    selfInfo: SelfInfo?,
+    isSelfInfoLoading: Boolean,
     items: LazyPagingItems<SubjectCollectionInfo>,
-    onClickSearch: () -> Unit,
     onClickLogin: () -> Unit,
-    onClickRetryRefreshSession: () -> Unit,
-    onClickSettings: () -> Unit,
     onCollectionUpdate: (subjectId: Int, episode: EpisodeListItem) -> Unit,
     modifier: Modifier = Modifier,
     actions: @Composable RowScope.() -> Unit = {},
@@ -212,28 +202,15 @@ fun CollectionPage(
     // 如果有缓存, 列表区域要展示缓存, 错误就用图标放在角落
     CollectionPageLayout(
         settingsIcon = {
-            if (authState.isKnownGuestOrLoggedOut // #1269 游客模式下无法打开设置界面
-                || currentWindowAdaptiveInfo1().windowSizeClass.isWidthAtLeastMedium
-            ) {
-                IconButton(onClick = onClickSettings) {
-                    Icon(Icons.Rounded.Settings, "设置")
-                }
-            }
         },
         actions = {
-            SessionTipsIcon(
-                authState,
-                onLogin = onClickLogin,
-                onRetry = onClickRetryRefreshSession,
-            )
             actions()
         },
         avatar = { recommendedSize ->
             SelfAvatar(
-                authState,
-                state.selfInfo,
-                onClickLogin = onClickLogin,
-                onClickRetryRefreshSession = onClickRetryRefreshSession,
+                selfInfo,
+                isLoading = isSelfInfoLoading,
+                onClick = onClickLogin,
                 size = recommendedSize,
             )
         },
@@ -285,54 +262,38 @@ fun CollectionPage(
         modifier,
         windowInsets,
     ) { nestedScrollConnection ->
-        when {
-            // 假设没登录, 但是有缓存, 需要展示缓存
-            authState.isKnownGuest && items.itemCount == 0 -> {
-                SessionTipsArea(
-                    authState,
-                    guest = { GuestTips(onClickSearch = onClickSearch, onClickLogin = onClickLogin) },
-                    onLogin = onClickLogin,
-                    onRetry = onClickRetryRefreshSession,
-                    modifier = Modifier.padding(top = 32.dp)
-                        .padding(horizontal = 16.dp),
+
+        key(state.selectedTypeIndex) {
+            PullToRefreshBox(
+                items.loadState.refresh is LoadState.Loading,
+                onRefresh = { items.refresh() },
+                state = rememberPullToRefreshState(),
+                enabled = LocalPlatform.current.isMobile(),
+            ) {
+                SubjectCollectionsColumn(
+                    items,
+                    item = { collection ->
+                        var nsfwModeState: NsfwMode by rememberSaveable(collection) { mutableStateOf(collection.nsfwMode) }
+                        NsfwMask(
+                            nsfwModeState,
+                            onTemporarilyDisplay = { nsfwModeState = NsfwMode.DISPLAY },
+                            shape = SubjectCollectionItemDefaults.shape,
+                        ) {
+                            SubjectCollectionItem(
+                                collection,
+                                { onCollectionUpdate(collection.subjectId, it) },
+                                state.subjectProgressStateFactory,
+                                state.createEditableSubjectCollectionTypeState(collection),
+                            )
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize()
+                        .ifNotNullThen(nestedScrollConnection) { nestedScroll(it) },
+                    enableAnimation = enableAnimation,
+                    gridState = lazyGridState,
                 )
             }
-
-            else -> {
-                key(state.selectedTypeIndex) {
-                    PullToRefreshBox(
-                        items.loadState.refresh is LoadState.Loading,
-                        onRefresh = { items.refresh() },
-                        state = rememberPullToRefreshState(),
-                        enabled = LocalPlatform.current.isMobile(),
-                    ) {
-                        SubjectCollectionsColumn(
-                            items,
-                            item = { collection ->
-                                var nsfwModeState: NsfwMode by rememberSaveable(collection) { mutableStateOf(collection.nsfwMode) }
-                                NsfwMask(
-                                    nsfwModeState,
-                                    onTemporarilyDisplay = { nsfwModeState = NsfwMode.DISPLAY },
-                                    shape = SubjectCollectionItemDefaults.shape,
-                                ) {
-                                    SubjectCollectionItem(
-                                        collection,
-                                        { onCollectionUpdate(collection.subjectId, it) },
-                                        state.subjectProgressStateFactory,
-                                        state.createEditableSubjectCollectionTypeState(collection),
-                                    )
-                                }
-                            },
-                            modifier = Modifier.fillMaxSize()
-                                .ifNotNullThen(nestedScrollConnection) { nestedScroll(it) },
-                            enableAnimation = enableAnimation,
-                            gridState = lazyGridState,
-                        )
-                    }
-                }
-            }
         }
-
     }
 }
 
