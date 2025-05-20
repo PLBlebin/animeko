@@ -36,37 +36,36 @@ import androidx.compose.ui.unit.DpSize
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import me.him188.ani.app.data.models.user.SelfInfo
 import me.him188.ani.app.domain.session.SessionManager
 import me.him188.ani.app.navigation.AniNavigator
 import me.him188.ani.app.navigation.LocalNavigator
 import me.him188.ani.app.tools.rememberUiMonoTasker
 import me.him188.ani.app.ui.external.placeholder.placeholder
 import me.him188.ani.app.ui.foundation.avatar.AvatarImage
+import me.him188.ani.app.ui.user.SelfInfoUiState
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.coroutines.CoroutineContext
 
 @Composable
 fun SelfAvatar(
-    selfInfo: SelfInfo?,
-    isLoading: Boolean,
+    state: SelfInfoUiState,
     size: DpSize, // = DpSize(48.dp, 48.dp)
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 //    handler: SelfAvatarActionHandler = rememberSelfAvatarActionHandler(),
 ) {
-    var showMenu by rememberSaveable { mutableStateOf(false) }
+//    var showMenu by rememberSaveable { mutableStateOf(false) }
     Box {
         Surface(onClick, modifier.size(size).clip(CircleShape), shape = CircleShape) {
-            if (isLoading) {
+            if (state.isLoading) {
                 // 加载中时展示 placeholder
                 AvatarImage(
-                    url = selfInfo?.avatarUrl,
-                    Modifier.size(size).clip(CircleShape).placeholder(selfInfo == null),
+                    url = state.selfInfo?.avatarUrl,
+                    Modifier.size(size).clip(CircleShape).placeholder(state.selfInfo == null),
                 )
             } else {
-                if (selfInfo == null) {
+                if (state.isSessionValid == false || state.selfInfo == null) {
                     Icon(
                         Icons.Rounded.Person,
                         "Avatar",
@@ -74,7 +73,7 @@ fun SelfAvatar(
                     )
                 } else {
                     AvatarImage(
-                        url = selfInfo.avatarUrl,
+                        url = state.selfInfo.avatarUrl,
                         modifier = Modifier.size(size).clip(CircleShape),
                     )
                 }

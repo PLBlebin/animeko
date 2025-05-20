@@ -13,12 +13,21 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Clock
-import me.him188.ani.app.data.repository.*
+import me.him188.ani.app.data.repository.RepositoryAuthorizationException
+import me.him188.ani.app.data.repository.RepositoryException
+import me.him188.ani.app.data.repository.RepositoryNetworkException
+import me.him188.ani.app.data.repository.RepositoryRateLimitedException
+import me.him188.ani.app.data.repository.RepositoryServiceUnavailableException
+import me.him188.ani.app.data.repository.RepositoryUnknownException
 import me.him188.ani.app.data.repository.user.AccessTokenSession
 import me.him188.ani.app.data.repository.user.GuestSession
 import me.him188.ani.app.data.repository.user.Session
@@ -86,9 +95,9 @@ class SessionManager(
         }
     }
 
+
     private val _stateProvider = object : SessionStateProvider {
-        //        override val state = MutableStateFlow<SessionState>(SessionState.Invalid)
-        override val state =
+        override val stateFlow =
             MutableSharedFlow<SessionState>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     }
 
@@ -96,7 +105,7 @@ class SessionManager(
 
     private val backgroundJob by lazy {
         fun emitState(state: SessionState) {
-            check(_stateProvider.state.tryEmit(state))
+            check(_stateProvider.stateFlow.tryEmit(state))
         }
 
         /**
@@ -205,7 +214,7 @@ class SessionManager(
     }
 
     /**
-     * 登录成功后调用, 设置一个会话. 这也会导致 [stateProvider] [SessionStateProvider.state] 更新.
+     * 登录成功后调用, 设置一个会话. 这也会导致 [stateProvider] [SessionStateProvider.stateFlow] 更新.
      */
     suspend fun setSession(
         session: AccessTokenSession,
@@ -218,7 +227,7 @@ class SessionManager(
 
 
     /**
-     * 设置为未登录状态. 同时清空 accessToken 和 refreshToken. 这也会导致 [stateProvider] [SessionStateProvider.state] 更新.
+     * 设置为未登录状态. 同时清空 accessToken 和 refreshToken. 这也会导致 [stateProvider] [SessionStateProvider.stateFlow] 更新.
      */
     suspend fun clearSession() {
         tokenRepository.clear()
@@ -228,9 +237,9 @@ class SessionManager(
     private val refreshSessionLock = Mutex()
 
     /**
-     * 使用 refreshToken 刷新 accessToken. 刷新成功后会自动持久化. 这也会导致 [stateProvider] [SessionStateProvider.state] 更新.
+     * 使用 refreshToken 刷新 accessToken. 刷新成功后会自动持久化. 这也会导致 [stateProvider] [SessionStateProvider.stateFlow] 更新.
      *
-     * 只有当 [SessionStateProvider.state] 为网络错误, 并且用户主动点击了刷新按钮时, 才应当调用此函数.
+     * 只有当 [SessionStateProvider.stateFlow] 为网络错误, 并且用户主动点击了刷新按钮时, 才应当调用此函数.
      *
      * @throws RepositoryException
      */

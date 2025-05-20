@@ -9,13 +9,10 @@
 
 package me.him188.ani.app.ui.main
 
-import me.him188.ani.app.data.repository.user.UserRepository
 import me.him188.ani.app.ui.foundation.AbstractViewModel
+import me.him188.ani.app.ui.user.SelfInfoStateProducer
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 
 class MainScreenSharedViewModel : AbstractViewModel(), KoinComponent {
-    private val userRepository: UserRepository by inject()
-
-    val selfInfo = userRepository.selfInfoFlow().shareInBackground()
+    val selfInfo = SelfInfoStateProducer(koin = getKoin()).flow
 }

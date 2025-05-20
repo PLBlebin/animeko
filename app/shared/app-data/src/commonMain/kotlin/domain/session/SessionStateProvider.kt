@@ -12,11 +12,14 @@ interface SessionStateProvider {
     /**
      * 当前的登录状态.
      *
-     * 这个 flow 会在登录状态改变时发出新的值.
+     * 这个 flow 一定会 emit 一个值, 并且会在登录状态改变时发出新的值.
      *
-     * 在 APP 刚启动时, 这个 flow 有可能不会立即 emit, 因为我们可能需要刷新 token. 在刷新完成后, 它一定会 emit.
+     * 这个 flow 一定反映当前真实的登录状态, 也就是说它**不会**发射 [SessionState.Invalid] 作为初始值.
+     * 在 APP 刚启动时, 因为我们可能需要刷新 token, [stateFlow] 可能不会立即 emit. 在刷新完成后, 它一定会 emit.
      */
-    val state: Flow<SessionState>
+    val stateFlow: Flow<SessionState>
+
+    val eventFlow: Flow<SessionEvent>
 
     @Deprecated(
         "",
@@ -64,7 +67,7 @@ enum class InvalidSessionReason {
  * 判断当前的登录状态是否有效.
  */
 suspend fun SessionStateProvider.canAccessAniApiNow(): Boolean {
-    return when (state.first()) {
+    return when (stateFlow.first()) {
         is SessionState.Invalid -> false
         is SessionState.Valid -> true
     }
@@ -74,7 +77,7 @@ suspend fun SessionStateProvider.canAccessAniApiNow(): Boolean {
  * 判断当前的登录状态是否有效, 并且能访问需要 Bangumi 授权的功能.
  */
 suspend fun SessionStateProvider.canAccessBangumiApiNow(): Boolean {
-    return when (val state = state.first()) {
+    return when (val state = stateFlow.first()) {
         is SessionState.Invalid -> false
         is SessionState.Valid -> state.bangumiConnected
     }
@@ -94,6 +97,6 @@ suspend fun SessionStateProvider.checkAccessBangumiApiNow() {
 
 
 fun <T> Flow<T>.restartOnNewLogin(sessionStateProvider: SessionStateProvider): Flow<T> =
-    sessionStateProvider.state.flatMapLatest {
+    sessionStateProvider.stateFlow.flatMapLatest {
         this
     }

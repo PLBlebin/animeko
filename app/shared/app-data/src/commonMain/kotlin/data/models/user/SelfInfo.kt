@@ -14,12 +14,3 @@ data class SelfInfo(
     val hasPassword: Boolean,
     val avatarUrl: String?,
 )
-
-val TestSelfInfo
-    get() = SelfInfo(
-        id = Uuid.random(),
-        nickname = "TestUser",
-        email = "test@animeko.org",
-        hasPassword = false,
-        avatarUrl = null,
-    )

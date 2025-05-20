@@ -100,7 +100,7 @@ class BangumiAuthorizeViewModel : AbstractViewModel(), KoinComponent {
 
     suspend fun collectNewLoginEvent(onLogin: suspend () -> Unit) {
         sessionManager.events
-            .filterIsInstance<SessionEvent.Login>()
+            .filterIsInstance<SessionEvent.NewLogin>()
             .collectLatest { onLogin() }
     }
 }

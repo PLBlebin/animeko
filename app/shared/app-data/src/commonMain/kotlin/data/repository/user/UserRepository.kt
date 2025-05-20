@@ -28,7 +28,7 @@ class UserRepository(
     fun selfInfoFlow(): Flow<SelfInfo?> = flow {
         emit(dataStore.data.first())
 
-        if (sessionStateProvider.state.first() is SessionState.Valid) {
+        if (sessionStateProvider.stateFlow.first() is SessionState.Valid) {
             // Update self info when session is valid
             val self = try {
                 userApi.invoke {

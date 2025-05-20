@@ -40,7 +40,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.carousel.CarouselState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -64,8 +63,6 @@ import me.him188.ani.app.data.models.subject.TestFollowedSubjectInfos
 import me.him188.ani.app.data.models.subject.subjectInfo
 import me.him188.ani.app.data.models.subject.toNavPlaceholder
 import me.him188.ani.app.data.models.trending.TrendingSubjectInfo
-import me.him188.ani.app.data.models.user.SelfInfo
-import me.him188.ani.app.data.models.user.TestSelfInfo
 import me.him188.ani.app.navigation.LocalNavigator
 import me.him188.ani.app.navigation.SubjectDetailPlaceholder
 import me.him188.ani.app.ui.adaptive.AniTopAppBar
@@ -91,7 +88,6 @@ import me.him188.ani.app.ui.foundation.layout.isWidthAtLeastMedium
 import me.him188.ani.app.ui.foundation.layout.paneHorizontalPadding
 import me.him188.ani.app.ui.foundation.rememberHorizontalScrollControlState
 import me.him188.ani.app.ui.foundation.session.SelfAvatar
-import me.him188.ani.app.ui.foundation.stateOf
 import me.him188.ani.app.ui.foundation.theme.AniThemeDefaults
 import me.him188.ani.app.ui.foundation.widgets.LocalToaster
 import me.him188.ani.app.ui.lang.Lang
@@ -106,6 +102,8 @@ import me.him188.ani.app.ui.lang.exploration_trending
 import me.him188.ani.app.ui.search.createTestPager
 import me.him188.ani.app.ui.search.isLoadingFirstPageOrRefreshing
 import me.him188.ani.app.ui.search.rememberLoadErrorState
+import me.him188.ani.app.ui.user.SelfInfoUiState
+import me.him188.ani.app.ui.user.TestSelfInfoUiState
 import me.him188.ani.utils.platform.annotations.TestOnly
 import me.him188.ani.utils.platform.hasScrollingBug
 import org.jetbrains.compose.resources.stringResource
@@ -118,15 +116,12 @@ import org.jetbrains.compose.ui.tooling.preview.PreviewScreenSizes
  */
 @Stable
 class ExplorationPageState(
-    selfInfoState: State<SelfInfo?>,
     val trendingSubjectInfoPager: LazyPagingItems<TrendingSubjectInfo>,
     val followedSubjectsPager: Flow<PagingData<FollowedSubjectInfo>>,
     val recommendationPager: Flow<PagingData<RecommendedItemInfo>>,
     val horizontalScrollTipFlow: Flow<Boolean>,
     private val onSetDisableHorizontalScrollTip: () -> Unit,
 ) {
-    val selfInfo by selfInfoState
-
     val trendingSubjectsCarouselState = CarouselState(
         itemCount = {
             if (trendingSubjectInfoPager.isLoadingFirstPageOrRefreshing) {
@@ -149,8 +144,7 @@ class ExplorationPageState(
 @Composable
 fun ExplorationScreen(
     state: ExplorationPageState,
-    selfInfo: SelfInfo?,
-    isSelfInfoLoading: Boolean,
+    selfInfo: SelfInfoUiState,
     onSearch: () -> Unit,
     onClickLogin: () -> Unit,
     onClickSettings: () -> Unit,
@@ -174,7 +168,7 @@ fun ExplorationScreen(
                 Modifier.fillMaxWidth(),
                 actions = {
                     actions()
-                    if ((!isSelfInfoLoading && selfInfo == null) // #1269 游客模式下无法打开设置界面
+                    if (selfInfo.isSessionValid == false // #1269 游客模式下无法打开设置界面
                         || currentWindowAdaptiveInfo1().windowSizeClass.isWidthAtLeastMedium
                     ) {
                         IconButton(onClick = onClickSettings) {
@@ -185,7 +179,6 @@ fun ExplorationScreen(
                 avatar = { recommendedSize ->
                     SelfAvatar(
                         selfInfo,
-                        isSelfInfoLoading,
                         onClick = onClickLogin,
                         size = recommendedSize,
                     )
@@ -382,7 +375,6 @@ private fun PreviewExplorationPage() {
         ExplorationScreen(
             remember {
                 ExplorationPageState(
-                    selfInfoState = stateOf(TestSelfInfo),
                     trendingSubjectInfoPager,
                     followedSubjectsPager = createTestPager(TestFollowedSubjectInfos),
                     recommendationPager = createTestPager(TestRecommendedItemInfos),
@@ -390,8 +382,7 @@ private fun PreviewExplorationPage() {
                     onSetDisableHorizontalScrollTip = {},
                 )
             },
-            selfInfo = TestSelfInfo,
-            isSelfInfoLoading = false,
+            selfInfo = TestSelfInfoUiState,
             {},
             {},
             {},

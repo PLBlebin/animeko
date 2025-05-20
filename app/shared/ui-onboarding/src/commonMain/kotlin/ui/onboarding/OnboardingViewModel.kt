@@ -38,6 +38,7 @@ import me.him188.ani.app.data.models.preference.ProxySettings
 import me.him188.ani.app.data.repository.user.SettingsRepository
 import me.him188.ani.app.domain.foundation.HttpClientProvider
 import me.him188.ani.app.domain.session.SessionEvent
+import me.him188.ani.app.domain.session.SessionManager
 import me.him188.ani.app.domain.session.auth.AniAuthConfigurator
 import me.him188.ani.app.domain.session.auth.AuthState
 import me.him188.ani.app.domain.session.auth.OAuthClient
@@ -286,7 +287,7 @@ class OnboardingViewModel : AbstractSettingsViewModel(), KoinComponent {
 
     suspend fun collectNewLoginEvent(onLogin: suspend () -> Unit) {
         sessionManager.events
-            .filterIsInstance<SessionEvent.Login>()
+            .filterIsInstance<SessionEvent.NewLogin>()
             .collectLatest {
                 sessionManager.state.map { it.userInfoOrNull }.filterNotNull().first() // wait for userInfo loading
                 onLogin()

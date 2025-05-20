@@ -41,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import kotlinx.coroutines.launch
-import me.him188.ani.app.data.models.user.SelfInfo
 import me.him188.ani.app.navigation.LocalNavigator
 import me.him188.ani.app.navigation.MainScreenPage
 import me.him188.ani.app.navigation.getIcon
@@ -70,14 +69,14 @@ import me.him188.ani.app.ui.foundation.widgets.showLoadError
 import me.him188.ani.app.ui.subject.collection.CollectionPage
 import me.him188.ani.app.ui.subject.collection.UserCollectionsViewModel
 import me.him188.ani.app.ui.update.UpdateNotifier
+import me.him188.ani.app.ui.user.SelfInfoUiState
 import me.him188.ani.utils.platform.isAndroid
 
 
 @Composable
 fun MainScreen(
     page: MainScreenPage,
-    selfInfo: SelfInfo?,
-    isSelfInfoLoading: Boolean,
+    selfInfo: SelfInfoUiState,
     modifier: Modifier = Modifier,
     onNavigateToPage: (MainScreenPage) -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -97,7 +96,6 @@ fun MainScreen(
     MainScreenContent(
         page,
         selfInfo,
-        isSelfInfoLoading,
         onNavigateToPage,
         onNavigateToSettings,
         onNavigateToSearch,
@@ -109,8 +107,7 @@ fun MainScreen(
 @Composable
 private fun MainScreenContent(
     page: MainScreenPage,
-    selfInfo: SelfInfo?,
-    isSelfInfoLoading: Boolean,
+    selfInfo: SelfInfoUiState,
     onNavigateToPage: (MainScreenPage) -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToSearch: () -> Unit,
@@ -221,7 +218,6 @@ private fun MainScreenContent(
                         ExplorationScreen(
                             explorationPageViewModel.explorationPageState,
                             selfInfo,
-                            isSelfInfoLoading = isSelfInfoLoading,
                             onSearch = onNavigateToSearch,
                             onClickSettings = { navigator.navigateSettings() },
                             onClickLogin = { navigator.navigateBangumiAuthorize() },
@@ -233,7 +229,6 @@ private fun MainScreenContent(
                         CollectionPage(
                             state = userCollectionsViewModel.state,
                             selfInfo = selfInfo,
-                            isSelfInfoLoading = isSelfInfoLoading,
                             items = userCollectionsViewModel.items.collectAsLazyPagingItems(),
                             onClickLogin = { navigator.navigateBangumiAuthorize() },
                             onCollectionUpdate = { subjectId, episode ->
