@@ -22,9 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
@@ -32,10 +29,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.sample
-import kotlinx.coroutines.launch
 
 @Composable
 fun DanmakuHost(
@@ -78,7 +72,7 @@ fun DanmakuHost(
         ) {
             state.danmakuUpdateSubscription // subscribe changes
 
-            for (danmaku in state.presentFloatingDanmaku) {
+            for (danmaku in DanmakuCollectionIterator(state.floatingTrack)) {
                 // don't draw uninitialized danmaku
                 if (danmaku.y.isNaN()) continue
 
@@ -89,7 +83,7 @@ fun DanmakuHost(
                     )
                 }
             }
-            for (danmaku in state.presentFixedDanmaku) {
+            for (danmaku in DanmakuCollectionIterator(state.fixedTrack)) {
                 // don't draw uninitialized danmaku
                 if (danmaku.y.isNaN()) continue
 
@@ -107,19 +101,24 @@ fun DanmakuHost(
                 Column(modifier = Modifier.padding(4.dp).fillMaxSize()) {
                     Text("DanmakuHost state: ")
                     Text("  hostSize: ${state.hostWidth}x${state.hostHeight}, trackHeight: ${state.trackHeight}")
-                    Text("  paused: ${state.paused}, elapsedFrameTimeMillis: ${state.elapsedFrameTimeNanos / 1_000_000}")
-                    Text("  presentDanmakuCount: ${state.presentFixedDanmaku.size + state.presentFloatingDanmaku.size}")
+                    Text("  paused: ${state.paused}, elapsedFrameTimeMillis: ${state.elapsedFrameTimeNanos / 1_000_000}, frameTimeDeltaMillis: ${state.currentFrameTimeDeltaNanos / 1_000_000}")
+                    Text(
+                        "  presentDanmakuCount: ${
+                            DanmakuCollectionIterator(state.floatingTrack).toList().size +
+                                    DanmakuCollectionIterator(state.fixedTrack).toList().size
+                        }",
+                    )
                     HorizontalDivider()
                     Text("  floating tracks: ")
                     for (track in state.floatingTrack) {
                         Text("    $track")
                     }
                     Text("  top tracks: ")
-                    for (track in state.topTrack) {
+                    for (track in state.fixedTrack.filterNot { it.fromBottom }) {
                         Text("    $track")
                     }
                     Text("  bottom tracks: ")
-                    for (track in state.bottomTrack) {
+                    for (track in state.fixedTrack.filter { it.fromBottom }) {
                         Text("    $track")
                     }
                 }
