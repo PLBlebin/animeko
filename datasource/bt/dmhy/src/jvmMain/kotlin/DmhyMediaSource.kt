@@ -1,16 +1,6 @@
-/*
- * Copyright (C) 2024-2025 OpenAni and contributors.
- *
- * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
- * Use of this source code is governed by the GNU AGPLv3 license, which can be found at the following link.
- *
- * https://github.com/open-ani/ani/blob/main/LICENSE
- */
-
 package me.him188.ani.datasources.dmhy
 
-import kotlinx.coroutines.CancellationException
-import me.him188.ani.datasources.api.paging.PagedSource
+import me.him188.ani.datasources.api.paging.SizedSource
 import me.him188.ani.datasources.api.source.ConnectionStatus
 import me.him188.ani.datasources.api.source.DownloadSearchQuery
 import me.him188.ani.datasources.api.source.FactoryId
@@ -24,6 +14,7 @@ import me.him188.ani.datasources.dmhy.impl.DmhyPagedSourceImpl
 import me.him188.ani.datasources.dmhy.impl.protocol.Network
 import me.him188.ani.utils.ktor.ScopedHttpClient
 import me.him188.ani.utils.logging.error
+import kotlin.coroutines.cancellation.CancellationException
 
 class DmhyMediaSource(
     private val client: ScopedHttpClient,
@@ -67,7 +58,7 @@ class DmhyMediaSource(
         }
     }
 
-    override suspend fun startSearch(query: DownloadSearchQuery): PagedSource<Topic> {
+    override suspend fun startSearch(query: DownloadSearchQuery): SizedSource<Topic> {
         return DmhyPagedSourceImpl(query, network)
     }
 }

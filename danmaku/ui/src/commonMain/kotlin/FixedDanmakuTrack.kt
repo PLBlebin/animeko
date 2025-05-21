@@ -18,7 +18,6 @@ import androidx.compose.runtime.Stable
  * - tick 中的逻辑帧检测
  * - [FixedDanmakuTrack.place] 覆盖了正在显示的弹幕
  * - 调用 [DanmakuTrack.clearAll]
- * 移除时必须调用 [onRemoveDanmaku] 避免内存泄露.
  */
 @Stable
 internal class FixedDanmakuTrack<T : SizeSpecifiedDanmaku>(
@@ -29,10 +28,6 @@ internal class FixedDanmakuTrack<T : SizeSpecifiedDanmaku>(
     private val hostHeight: IntState,
     // 顶部或底部弹幕的显示时间，现在还不能自定义
     private val durationMillis: LongState,
-    // 在 tick pendingDanmaku 显示了会调用
-    private val onTickReplacePending: (FixedDanmaku<T>) -> Unit,
-    // 某个弹幕需要消失, 必须调用此函数避免内存泄漏.
-    private val onRemoveDanmaku: (FixedDanmaku<T>) -> Unit
 ) : DanmakuTrack<T, FixedDanmaku<T>> {
     internal var currentDanmaku: FixedDanmaku<T>? = null
         private set
@@ -45,7 +40,6 @@ internal class FixedDanmakuTrack<T : SizeSpecifiedDanmaku>(
         }
         val upcomingDanmaku =
             FixedDanmaku(danmaku, placeFrameTimeNanos, trackIndex, trackHeight, hostHeight, fromBottom)
-        currentDanmaku?.let(onRemoveDanmaku)
         currentDanmaku = upcomingDanmaku
         return upcomingDanmaku
     }
@@ -62,13 +56,13 @@ internal class FixedDanmakuTrack<T : SizeSpecifiedDanmaku>(
         // 未放置的弹幕一定可以放置
         if (placeFrameTimeNanos == DanmakuTrack.NOT_PLACED) return true
         // 当前没有正在显示的弹幕并且弹幕可以被显示
-        return frameTimeNanosState.value - placeFrameTimeNanos < durationMillis.value
+        return frameTimeNanosState.longValue - placeFrameTimeNanos < durationMillis.longValue
     }
 
     /**
      * 设置待发送的弹幕. 当前弹幕显示完后一定显示这条弹幕.
-     * 
-     * 如果已经有 pending, 那已有 pending 会立刻替换 current 并返回被放置的 pending 
+     *
+     * 如果已经有 pending, 那已有 pending 会立刻替换 current 并返回被放置的 pending
      */
     internal fun setPending(danmaku: T): FixedDanmaku<T>? {
         val lastPending = pendingDanmaku?.let { place(it) }
@@ -77,21 +71,38 @@ internal class FixedDanmakuTrack<T : SizeSpecifiedDanmaku>(
     }
 
     override fun clearAll() {
-        currentDanmaku?.let(onRemoveDanmaku)
         currentDanmaku = null
     }
 
     override fun tick() {
         val current = currentDanmaku ?: return
         val danmakuTime = current.placeFrameTimeNanos
-        if (frameTimeNanosState.value - danmakuTime >= durationMillis.value * 1_000_000) {
-            onRemoveDanmaku(current)
+        if (frameTimeNanosState.longValue - danmakuTime >= durationMillis.longValue * 1_000_000) {
             currentDanmaku = null
-            
+
             val pending = pendingDanmaku
             if (pending != null) {
-                onTickReplacePending(place(pending))
                 pendingDanmaku = null
+            }
+        }
+    }
+
+    /**
+     * 这个迭代器不是线程安全的, 访问迭代器时不保证 danmakuList.
+     */
+    override fun iterator(): Iterator<FixedDanmaku<T>> {
+        return object : Iterator<FixedDanmaku<T>> {
+            private var hasNext = currentDanmaku != null
+
+            override fun hasNext(): Boolean {
+                return hasNext
+            }
+
+            override fun next(): FixedDanmaku<T> {
+                if (!hasNext) throw NoSuchElementException()
+                val current = currentDanmaku ?: throw NoSuchElementException()
+                hasNext = false
+                return current
             }
         }
     }
@@ -119,9 +130,9 @@ internal class FixedDanmaku<T : SizeSpecifiedDanmaku>(
 
     internal fun calculatePosY(): Float {
         return if (fromBottom) {
-            hostHeight.value - (trackIndex + 1) * trackHeight.value.toFloat()
+            hostHeight.intValue - (trackIndex + 1) * trackHeight.intValue.toFloat()
         } else {
-            trackIndex * trackHeight.value.toFloat()
+            trackIndex * trackHeight.intValue.toFloat()
         }
     }
 
