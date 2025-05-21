@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.selects.onTimeout
+import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Clock
@@ -33,12 +35,14 @@ import me.him188.ani.app.data.repository.user.GuestSession
 import me.him188.ani.app.data.repository.user.Session
 import me.him188.ani.app.data.repository.user.TokenRepository
 import me.him188.ani.app.domain.session.auth.OAuthResult
+import me.him188.ani.utils.logging.error
 import me.him188.ani.utils.logging.debug
 import me.him188.ani.utils.logging.info
 import me.him188.ani.utils.logging.thisLogger
 import me.him188.ani.utils.logging.warn
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -78,7 +82,7 @@ class SessionManager(
          *
          * 刷新失败会在一段时间后自动重试. [refreshTokenBefore] 时间长一点可以增加更多重试机会.
          */
-        val refreshTokenBefore: Duration = 24.hours, // 注意, Ani 服务器会至少给 31 天 accessToken.
+        val refreshTokenBefore: Duration = 9.days, // 注意, Ani 服务器会至少给 31 天 accessToken.
         /**
          * 在刷新失败后, 等待多久再尝试刷新.
          */
@@ -109,15 +113,17 @@ class SessionManager(
             check(_stateProvider.stateFlow.tryEmit(state))
         }
 
+        fun emitEvent(event: SessionEvent) {
+            check(_stateProvider.eventFlow.tryEmit(event))
+        }
+
         /**
          * 维护 accessToken 的有效性. 此函数可在有新的 session 时被 cancel.
          *
          * 只有这里会修改 [stateProvider].
          */
-        suspend fun maintainAccessTokenLoop(session: AccessTokenSession) {
-            logger.debug {
-                "SessionManager: maintainAccessTokenLoop started with session: $session"
-            }
+        suspend fun maintainAccessTokenLoop(session: AccessTokenSession, isNewSession: Boolean = false) {
+            logger.debug { "SessionManager: maintainAccessTokenLoop started with session: $session" }
 
             if (session.tokens.isExpired(clock)) {
                 // 我们确定此时已经过期了. 但是先别急, 可以刷新
@@ -125,6 +131,10 @@ class SessionManager(
                 try {
                     // 目前不支持检查 refreshToken 是否过期, 所以直接请求刷新
                     refreshSession() // This is expected to throw RepositoryException
+                    // 如果是新保存的 session 并且无效, 但是刷新后有效了, 那也视为新登录
+                    if (isNewSession) {
+                        emitEvent(SessionEvent.NewLogin)
+                    }
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: RepositoryException) {
@@ -146,51 +156,61 @@ class SessionManager(
                     }
 
                     if (reason == InvalidSessionReason.UNKNOWN) {
-                        logger.error("Refresh session failed with unknown error", e)
+                        logger.error(e) { "Refresh session failed with unknown error" }
                     } else {
                         // 对于已知的错误, 不要记录冗长的堆栈
                         logger.warn { "Refresh session failed with known error: $reason" }
                     }
 
                     emitState(SessionState.Invalid(reason))
+                    emitEvent(SessionEvent.Expired)
                 } catch (e: Exception) {
                     emitState(SessionState.Invalid(InvalidSessionReason.NETWORK_ERROR))
-                    logger.error("Refresh session failed", e)
+                    emitEvent(SessionEvent.Expired)
+                    logger.error(e) { "Refresh session failed" }
                 }
+                // 无论成不成功都等 1h 再刷新, 这可能会导致用户在这 1h 内无法操作
+                delay(config.refreshAttemptInterval)
             } else {
                 // token 还没有过期, 直接发出有效的状态
                 emitState(SessionState.Valid(bangumiConnected = session.tokens.bangumiAccessToken != null))
+                // 如果是新保存的 session 并且也有效, 那就视为新登录
+                if (isNewSession) {
+                    emitEvent(SessionEvent.NewLogin)
+                }
+            }
 
+            while (true) {
                 // Token 会在未来过期, 所以我们延迟到那个时候
                 val ttl = (session.tokens.expiresAtMillis - clock.now().toEpochMilliseconds()).milliseconds
-                    .minus(config.refreshTokenBefore) // 提前一小会
+                    .minus(config.refreshTokenBefore).coerceAtLeast(0.milliseconds) // 提前一小会
 
-                logger.debug {
-                    "SessionManager: access token is valid, will refresh in $ttl ms"
+                logger.debug { "SessionManager: access token is valid, will refresh in $ttl ms" }
+
+                if (ttl != 0.milliseconds) {
+                    delay(ttl)
                 }
 
-                delay(ttl)
-
-                logger.info {
-                    "SessionManager: access token is about to expire, refreshing now"
-                }
+                logger.info { "SessionManager: access token is about to expire, refreshing now" }
 
                 // 每小时尝试一次
-                while (session.tokens.isExpired(clock)) {
+                while (true) {
                     try {
                         refreshSession()
+                        // 刷新成功就等待下一次 ttl
+                        break
                     } catch (e: Exception) {
                         // 不管是什么错误, 反正失败了就等
                         val re = RepositoryException.wrapOrThrowCancellation(e)
                         if (re is RepositoryUnknownException) {
-                            logger.error(
-                                "Refresh session failed with unknown exception, see cause. Retrying in ${config.refreshAttemptInterval}",
-                                e,
-                            )
+                            logger.error(e) {
+                                "Refresh session failed with unknown exception, see cause. Retrying in ${config.refreshAttemptInterval}"
+                            }
                         } else {
-                            logger.warn("Refresh session failed with $re. Retrying in ${config.refreshAttemptInterval}")
+                            logger.warn {
+                                "Refresh session failed with $re. Retrying in ${config.refreshAttemptInterval}"
+                            }
                         }
-                        delay(config.refreshAttemptInterval)
                     }
                 }
             }
@@ -199,10 +219,21 @@ class SessionManager(
 
         // 启动后台任务, 定时刷新 token
         coroutineScope.launch(CoroutineName("SessionManager auto refresh")) {
+            var lastIsLogin: Boolean? = null
             tokenRepository.session.collectLatest { session ->
                 when (session) {
-                    is GuestSession -> emitState(SessionState.Invalid(InvalidSessionReason.NO_TOKEN))
-                    is AccessTokenSession -> maintainAccessTokenLoop(session)
+                    is GuestSession -> {
+                        if (lastIsLogin == true) {
+                            emitEvent(SessionEvent.Logout)
+                        }
+                        lastIsLogin = false
+                        emitState(SessionState.Invalid(InvalidSessionReason.NO_TOKEN))
+                    }
+
+                    is AccessTokenSession -> {
+                        maintainAccessTokenLoop(session, lastIsLogin == false)
+                        lastIsLogin = true
+                    }
                 }
             }
         }
@@ -245,10 +276,7 @@ class SessionManager(
      * @throws RepositoryException
      */
     suspend fun refreshSession() = refreshSessionLock.withLock {
-        val refreshToken = tokenRepository.refreshToken.first()
-        if (refreshToken == null) {
-            return
-        }
+        val refreshToken = tokenRepository.refreshToken.first() ?: return
 
         try {
             val result = refreshSession.refresh(refreshToken)
