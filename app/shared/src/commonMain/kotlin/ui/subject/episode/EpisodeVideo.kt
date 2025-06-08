@@ -49,6 +49,8 @@ import me.him188.ani.app.ui.foundation.animation.AniAnimatedVisibility
 import me.him188.ani.app.ui.foundation.effects.cursorVisibility
 import me.him188.ani.app.ui.foundation.icons.AniIcons
 import me.him188.ani.app.ui.foundation.icons.Forward85
+import me.him188.ani.app.ui.foundation.icons.PushPinOff
+import me.him188.ani.app.ui.foundation.icons.PushPinOn
 import me.him188.ani.app.ui.foundation.icons.RightPanelClose
 import me.him188.ani.app.ui.foundation.icons.RightPanelOpen
 import me.him188.ani.app.ui.foundation.ifThen
@@ -95,6 +97,7 @@ internal const val TAG_DANMAKU_SETTINGS_SHEET = "DanmakuSettingsSheet"
 internal const val TAG_SHOW_MEDIA_SELECTOR = "ShowMediaSelector"
 internal const val TAG_SHOW_SETTINGS = "ShowSettings"
 internal const val TAG_COLLAPSE_SIDEBAR = "collapseSidebar"
+internal const val TAG_TOGGLE_WINDOW_ON_TOP = "toggleWindowOnTop"
 
 internal const val TAG_MEDIA_SELECTOR_SHEET = "MediaSelectorSheet"
 internal const val TAG_EPISODE_SELECTOR_SHEET = "EpisodeSelectorSheet"
@@ -122,6 +125,8 @@ internal fun EpisodeVideoImpl(
     detachedProgressSlider: @Composable () -> Unit,
     sidebarVisible: Boolean,
     onToggleSidebar: (isCollapsed: Boolean) -> Unit,
+    isAlwaysOnTop: Boolean,
+    onToggleWindowOnTop: () -> Unit,
     progressSliderState: PlayerProgressSliderState,
     cacheProgressInfoFlow: Flow<MediaCacheProgressInfo>,
     audioController: LevelController,
@@ -190,6 +195,16 @@ internal fun EpisodeVideoImpl(
                                 Icon(Icons.Rounded.Settings, contentDescription = "设置")
                             }
                             if (expanded && LocalPlatform.current.isDesktop()) {
+                                IconButton(
+                                    { onToggleWindowOnTop() },
+                                    Modifier.testTag(TAG_TOGGLE_WINDOW_ON_TOP)
+                                ) {
+                                    if (isAlwaysOnTop) {
+                                        Icon(AniIcons.PushPinOn, contentDescription = "取消置顶")
+                                    } else {
+                                        Icon(AniIcons.PushPinOff, contentDescription = "置顶窗口")
+                                    }
+                                }
                                 IconButton(
                                     { onToggleSidebar(!sidebarVisible) },
                                     Modifier.testTag(TAG_COLLAPSE_SIDEBAR),

@@ -57,6 +57,12 @@ actual open class PlatformWindow(
     }
 
     actual val deviceOrientation: DeviceOrientation = DeviceOrientation.LANDSCAPE
+    
+    private var _isAlwaysOnTop: Boolean by mutableStateOf(false)
+    
+    actual val isAlwaysOnTop: Boolean by derivedStateOf {
+        _isAlwaysOnTop
+    }
 
     internal fun onWindowsUndecoratedFullscreenStateChange(newState: Boolean) {
         isWindowsUndecoratedFullscreen = newState
@@ -68,6 +74,14 @@ actual open class PlatformWindow(
 
     actual fun floating() {
         windowState.placement = WindowPlacement.Floating
+    }
+    
+    actual fun toggleWindowOnTop() {
+        if (windowScope != null) {
+            _isAlwaysOnTop = !_isAlwaysOnTop
+            windowScope.window.isAlwaysOnTop = _isAlwaysOnTop
+        }
+        
     }
 }
 

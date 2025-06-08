@@ -35,6 +35,8 @@ actual class PlatformWindow(
 
     actual val isExactlyMaximized: Boolean get() = false
 
+    actual val isAlwaysOnTop: Boolean get() = false
+
     internal fun register() {
         // Start listening to device orientation changes
         UIDevice.currentDevice.beginGeneratingDeviceOrientationNotifications()
@@ -68,6 +70,10 @@ actual class PlatformWindow(
     }
 
     actual fun floating() {
+    }
+    
+    actual fun toggleWindowOnTop() {
+        
     }
 }
 

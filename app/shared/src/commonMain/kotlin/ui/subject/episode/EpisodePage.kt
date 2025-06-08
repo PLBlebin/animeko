@@ -76,7 +76,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -818,6 +817,12 @@ private fun EpisodeVideo(
     val danmakuTextPlaceholder = remember { randomDanmakuPlaceholder() }
     val window = LocalPlatformWindow.current
 
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
+        if (window.isAlwaysOnTop) {
+            window.toggleWindowOnTop()
+        }
+    }
+
     SideEffect {
         vm.onUIReady()
     }
@@ -913,6 +918,10 @@ private fun EpisodeVideo(
         sidebarVisible = vm.sidebarVisible,
         onToggleSidebar = {
             vm.sidebarVisible = it
+        },
+        isAlwaysOnTop = window.isAlwaysOnTop,
+        onToggleWindowOnTop = {
+            window.toggleWindowOnTop()
         },
         progressSliderState = progressSliderState,
         cacheProgressInfoFlow = vm.cacheProgressInfoFlow,

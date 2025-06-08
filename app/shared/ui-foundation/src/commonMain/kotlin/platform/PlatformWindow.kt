@@ -22,6 +22,8 @@ expect class PlatformWindow {
 
     val isUndecoratedFullscreen: Boolean
     val deviceOrientation: DeviceOrientation
+    
+    val isAlwaysOnTop: Boolean
 
     /**
      * 将窗口最大化. 注意, 这不是全屏.
@@ -30,6 +32,7 @@ expect class PlatformWindow {
      */
     fun maximize()
     fun floating()
+    fun toggleWindowOnTop()
 }
 
 enum class DeviceOrientation {

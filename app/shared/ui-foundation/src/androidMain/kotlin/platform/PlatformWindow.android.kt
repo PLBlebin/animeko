@@ -42,6 +42,8 @@ actual class PlatformWindow(
 
     private var _isUndecoratedFullscreen: Boolean by mutableStateOf(initialUndecoratedFullscreen)
     actual val isUndecoratedFullscreen: Boolean get() = _isUndecoratedFullscreen
+    
+    actual val isAlwaysOnTop: Boolean get() = false
 
     private val insetListener = View.OnApplyWindowInsetsListener { _, insets ->
         @Suppress("DEPRECATION")
@@ -105,6 +107,10 @@ actual class PlatformWindow(
     }
 
     actual fun floating() {
+    }
+    
+    actual fun toggleWindowOnTop() {
+        
     }
 }
 
